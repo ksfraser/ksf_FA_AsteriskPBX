@@ -11,6 +11,7 @@ $path_to_root = "../../..";
 include_once($path_to_root . "/includes/session.inc");
 include_once($path_to_root . "/includes/ui.inc");
 include_once($path_to_root . "/modules/FA_AsteriskPBX/includes/asterisk_db.inc");
+include_once($path_to_root . "/modules/FA_AsteriskPBX/includes/asterisk_config.inc");
 
 page(_("Asterisk Extension Management"), false, false, "", $js);
 
@@ -26,13 +27,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_extension'])) {
     
     if ($extension_id > 0) {
         update_extension($extension_id, $employee_id, $email, $forward_to);
-        display_notification(_("Extension updated"));
+        
+        // Sync to Asterisk
+        $ext = get_extension($extension_id);
+        if ($ext) {
+            sync_extension_to_asterisk($ext);
+        }
+        
+        display_notification(_("Extension updated and synced to Asterisk"));
     } else {
-        create_extension($extension, $employee_id, $sip_peer, $email);
-        display_notification(_("Extension created"));
+        $new_id = create_extension($extension, $employee_id, $sip_peer, $email);
+        
+        // Sync to Asterisk
+        $ext = get_extension($new_id);
+        if ($ext) {
+            sync_extension_to_asterisk($ext);
+        }
+        
+        display_notification(_("Extension created and synced to Asterisk"));
     }
     meta_refresh(null, "?");
     $Ajax->activate('content_area');
+}
+
+// Handle settings save
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_settings'])) {
+    save_asterisk_settings(
+        $_POST['asterisk_host'],
+        $_POST['asterisk_port'],
+        $_POST['asterisk_user'],
+        $_POST['asterisk_pass'],
+        $_POST['asterisk_config_dir']
+    );
+    display_notification(_("Asterisk settings saved"));
 }
 
 echo "<h2>" . _("Asterisk Extensions") . "</h2>";
@@ -62,6 +89,28 @@ while ($ext = db_fetch($extensions)) {
 end_table(1);
 
 echo "<br><a href='?extension_id=0'>" . _("Add New Extension") . "</a>";
+
+// Asterisk Settings Section
+echo "<br><br><h2>" . _("Asterisk Settings") . "</h2>";
+
+$asterisk_host = get_asterisk_host();
+$asterisk_port = get_asterisk_port();
+$asterisk_user = get_asterisk_admin_user();
+$asterisk_config_dir = get_asterisk_config_dir();
+
+start_form(true);
+start_table(TABLESTYLE);
+
+text_row(_("Asterisk Host:"), 'asterisk_host', $asterisk_host, 50);
+text_row(_("AMI Port:"), 'asterisk_port', $asterisk_port ?: 5038, 10);
+text_row(_("AMI Username:"), 'asterisk_user', $asterisk_user, 30);
+password_row(_("AMI Password:"), 'asterisk_pass', '');
+text_row(_("Config Directory:"), 'asterisk_config_dir', $asterisk_config_dir ?: '/etc/asterisk', 100);
+
+end_table(1);
+
+submit_center('save_settings', _("Save Settings"));
+end_form();
 
 if ($extension_id !== null && ($extension_id > 0 || isset($_GET['extension_id']))) {
     $extension = $extension_id > 0 ? get_extensions(['id' => $extension_id]) : null;
@@ -97,4 +146,15 @@ function get_employees_list_options(): array
         $options[$emp['id']] = $emp['name'];
     }
     return $options;
+}
+
+function get_extension(int $id): ?array
+{
+    global $db;
+    $sql = "SELECT * FROM " . TB_PREF . "asterisk_extensions WHERE id = " . $id;
+    $result = $db->query($sql);
+    if ($result && $db->num_rows($result) > 0) {
+        return $db->fetch($result);
+    }
+    return null;
 }
