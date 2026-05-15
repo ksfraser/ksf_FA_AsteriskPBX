@@ -7,6 +7,7 @@ define('SS_ASTERISK', 120 << 8);
 
 class hooks_fa_asteriskpbx extends hooks {
     var $module_name = 'fa_asteriskpbx';
+    var $version = '1.0.0';
 
     function install_options($app) {
         global $path_to_root;
