@@ -1,0 +1,12 @@
+{
+    "name": "ksfraser/ksf-fa-asteriskpbx",
+    "description": "FrontAccounting adapter for Asterisk PBX integration module.",
+    "type": "fa-module",
+    "license": "GPL-3.0",
+    "require": {
+        "php": ">=7.4",
+        "ksfraser/traits": "^1.2"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

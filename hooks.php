@@ -1,120 +1,146 @@
 <?php
 /**
- * KSF FrontAccounting Module Hooks
- * 
- * STANDARD PATTERNS:
- * 
- * 1. ADDING MODULE TABS
- *    Define a class extending 'application' in hooks.php.
- *    Return new instance from install_tabs().
- *    Include add_extensions() to load other modules' install_options.
- * 
- * 2. ADDING MENU ITEMS TO EXISTING APPS
- *    Use install_options() with switch($app->id).
- *    Use add_module() + add_lapp_function() for new menu section.
- * 
- * 3. DATABASE SCHEMA
- *    DO NOT create tables in PHP code.
- *    Use sql/install.sql with @TB_PREF@ placeholders.
- *    Call $this->update_databases() in activate_extension().
- * 
- * 4. SECURITY
- *    Define SS_<MODULE> constant (section << 8).
- *    Define SA_<MODULE>VIEW and SA_<MODULE>MANAGE in install_access().
- * 
- * @package KsfFA_ksf_FA_AsteriskPBX
- * @version 2.4.3
+ * FA_AsteriskPBX Module Hooks for FrontAccounting
  */
 
-define('SS_ksf_FA_AsteriskPBX', 146 << 8);
+define('SS_ASTERISK', 120 << 8);
+
+// ---------------------------------------------------------------------------
+// Ensure Composer autoloader is loaded before the class definition so that
+// trait dependencies (HookQueryProviderTrait) are available at class-load time.
+// ---------------------------------------------------------------------------
+$moduleAutoload = dirname(__FILE__) . '/vendor/autoload.php';
+if (file_exists($moduleAutoload)) {
+    require_once $moduleAutoload;
+}
 
 class hooks_ksf_FA_AsteriskPBX extends hooks {
+    use \Ksfraser\Traits\HookQueryProviderTrait;
+
     var $module_name = 'ksf_FA_AsteriskPBX';
-    var $version = '1.0.0';
+    var $version = '2.4.0';
 
-    /**
-     * Add module tab
-     * 
-     * Return new application class instance to add a tab.
-     * Omit or return nothing to skip tab addition.
-     * 
-     * @param application|null $app Ignored
-     * @return application|null New tab application instance or nothing
-     */
-    function install_tabs($app) {
-        // Override in modules that add apps
-        // return new ksf_FA_AsteriskPBX_app();
-    }
-
-    /**
-     * Add menu items to existing FA applications
-     * 
-     * @param application $app FA application instance
-     */
     function install_options($app) {
-        // Override in modules that add menu items
+        global $path_to_root;
+
+        switch($app->id) {
+            case 'CRM':
+                $app->add_lapp_function(0, _("Extension Mapping"),
+                    $path_to_root."/modules/".$this->module_name."/extensions.php", 'SA_ASTERISKADMIN', MENU_MAINTENANCE);
+                $app->add_lapp_function(1, _("Call History"),
+                    $path_to_root."/modules/".$this->module_name."/calls.php", 'SA_ASTERISKVIEW', MENU_INQUIRY);
+                $app->add_lapp_function(2, _("Voicemail"),
+                    $path_to_root."/modules/".$this->module_name."/voicemail.php", 'SA_ASTERISKMANAGE', MENU_INQUIRY);
+                break;
+        }
     }
 
-    /**
-     * Define security areas
-     * 
-     * @return array [0] => $security_areas, [1] => $security_sections
-     */
     function install_access() {
-        $security_sections[SS_ksf_FA_AsteriskPBX] = _("");
-        $security_areas['SA_ksf_FA_AsteriskPBXVIEW'] = array(
-            SS_ksf_FA_AsteriskPBX | 1, 
-            _("View ")
-        );
-        $security_areas['SA_ksf_FA_AsteriskPBXMANAGE'] = array(
-            SS_ksf_FA_AsteriskPBX | 2, 
-            _("Manage ")
-        );
+        $security_sections[SS_ASTERISK] = _("Asterisk PBX");
+        $security_areas['SA_ASTERISKADMIN'] = array(SS_ASTERISK | 1, _("Administer Extensions"));
+        $security_areas['SA_ASTERISKVIEW'] = array(SS_ASTERISK | 2, _("View Call History"));
+        $security_areas['SA_ASTERISKMANAGE'] = array(SS_ASTERISK | 3, _("Manage Calls"));
         return array($security_areas, $security_sections);
     }
 
-    /**
-     * Activate extension
-     * 
-     * @param int $company Company number
-     * @param bool $check_only Only check if activation possible
-     * @return bool Success
-     */
-    function activate_extension($company, $check_only=true) {
-        $this->ensure_composer_dependencies();
-        
-        // Apply sql/install.sql using update_databases()
-        // This handles @TB_PREF@ replacement automatically
-        if (file_exists(dirname(__FILE__) . '/sql/install.sql')) {
-            $updates = array('install.sql' => array($this->module_name));
-            return $this->update_databases($company, $updates, $check_only);
-        }
-        
+    function install_extension($check_only=true) {
         return true;
     }
 
-    /**
-     * Install composer dependencies if needed
-     */
-    private function ensure_composer_dependencies() {
-        $module_dir = dirname(__FILE__);
-        $autoload_path = $module_dir . '/vendor/autoload.php';
-        
-        if (file_exists($autoload_path)) {
-            return;
+    function install_tabs($app) {
+    }
+
+    function activate_extension($company, $check_only=true) {
+        $updates = array('sql/update.sql' => array($this->module_name));
+        $ok = $this->update_databases($company, $updates, $check_only);
+        if ($check_only || !$ok) {
+            return $ok;
         }
-        
-        $composer_path = $module_dir . '/composer.json';
-        if (!file_exists($composer_path)) {
-            return;
-        }
-        
-        chdir($module_dir);
-        $output = array();
-        $return_code = 0;
-        exec('composer install --no-interaction --prefer-dist 2>&1', $output, $return_code);
-        if ($return_code !== 0) {
-            error_log('KSF Module: composer install failed: ' . implode("\n", $output));
+        $this->ensure_asterisk_schema();
+        return $ok;
+    }
+
+    private function table_exists($table) {
+        $sql = "SHOW TABLES LIKE " . db_escape($table);
+        $res = db_query($sql, 'Failed checking table existence');
+        return db_num_rows($res) > 0;
+    }
+
+    private function ensure_asterisk_schema() {
+        $tables = array(
+            TB_PREF . "fa_asterisk_extensions" => "
+                CREATE TABLE IF NOT EXISTS `" . TB_PREF . "fa_asterisk_extensions` (
+                    `id` INT(11) NOT NULL AUTO_INCREMENT,
+                    `extension` VARCHAR(20) NOT NULL,
+                    `employee_id` VARCHAR(100) DEFAULT NULL,
+                    `name` VARCHAR(100) DEFAULT NULL,
+                    `is_active` TINYINT(1) DEFAULT 1,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    PRIMARY KEY (`id`),
+                    UNIQUE KEY `idx_extension` (`extension`),
+                    KEY `idx_employee` (`employee_id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+            TB_PREF . "fa_asterisk_calls" => "
+                CREATE TABLE IF NOT EXISTS `" . TB_PREF . "fa_asterisk_calls` (
+                    `id` INT(11) NOT NULL AUTO_INCREMENT,
+                    `caller_number` VARCHAR(20) DEFAULT NULL,
+                    `called_number` VARCHAR(20) DEFAULT NULL,
+                    `extension` VARCHAR(20) DEFAULT NULL,
+                    `call_type` VARCHAR(20) DEFAULT 'inbound',
+                    `start_time` DATETIME NOT NULL,
+                    `end_time` DATETIME DEFAULT NULL,
+                    `duration` INT(11) DEFAULT 0,
+                    `status` VARCHAR(20) DEFAULT 'completed',
+                    `recording_path` VARCHAR(500) DEFAULT NULL,
+                    `debtor_no` VARCHAR(20) DEFAULT NULL,
+                    `contact_id` INT(11) DEFAULT NULL,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (`id`),
+                    KEY `idx_extension` (`extension`),
+                    KEY `idx_debtor` (`debtor_no`),
+                    KEY `idx_start_time` (`start_time`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
+            TB_PREF . "fa_asterisk_voicemail" => "
+                CREATE TABLE IF NOT EXISTS `" . TB_PREF . "fa_asterisk_voicemail` (
+                    `id` INT(11) NOT NULL AUTO_INCREMENT,
+                    `extension` VARCHAR(20) NOT NULL,
+                    `caller_number` VARCHAR(20) DEFAULT NULL,
+                    `message_date` DATETIME NOT NULL,
+                    `duration` INT(11) DEFAULT 0,
+                    `file_path` VARCHAR(500) DEFAULT NULL,
+                    `is_read` TINYINT(1) DEFAULT 0,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (`id`),
+                    KEY `idx_extension` (`extension`),
+                    KEY `idx_read` (`is_read`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        foreach ($tables as $table_name => $sql) {
+            db_query($sql, "Could not create Asterisk PBX table: $table_name");
         }
     }
+
+    function db_prevoid($trans_type, $trans_no) {
+        // Handle voiding if needed
+    }
+
+    /**
+     * Return all values this module advertises via the query hook system.
+     *
+     * @return array<string, mixed>
+     */
+    protected function _getAdvertisedValues(): array
+    {
+        return array(
+            'asteriskpbx.sec_section'   => SS_ASTERISK,
+            'asteriskpbx.version'       => $this->version,
+            'asteriskpbx.module_name'   => $this->module_name,
+            'asteriskpbx.hooks_version' => '2.0',
+        );
+    }
 }
+?>
