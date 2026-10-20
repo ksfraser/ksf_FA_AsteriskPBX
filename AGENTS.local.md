@@ -7,8 +7,8 @@
 ```
 ksf_FA_AsteriskPBX/
 ├── sql/                    # Database schemas
-│   ├── fa_asterisk_extensions.sql
-│   ├── fa_asterisk_calls.sql
+│   ├── ksf_asteriskpbx_extensions.sql
+│   ├── ksf_asteriskpbx_calls.sql
 │   └── fa_asterisk_logs.sql
 ├── includes/              # FA-specific DB classes
 │   ├── extensions_db.inc
@@ -44,7 +44,7 @@ All development is done in the **devel tree** (`~/Documents/ksf_FA_AsteriskPBX`)
 6. **Push** `master` to GitHub
 7. **Deploy** to UAT by pulling in the Infrastructure bind point:
    ```
-   cd ~/ksf_Infrastructure/fa_modules/ksf_FA_AsteriskPBX
+   cd ~/ksf_Infrastructure/0_ksf_modules/ksf_FA_AsteriskPBX
    git stash -u
    git pull origin master
    git stash pop
@@ -53,4 +53,4 @@ All development is done in the **devel tree** (`~/Documents/ksf_FA_AsteriskPBX`)
 | Path | Purpose |
 |------|---------|
 | `~/Documents/ksf_FA_AsteriskPBX` | Devel tree — all development, testing, commits |
-| `~/ksf_Infrastructure/fa_modules/ksf_FA_AsteriskPBX` | UAT bind point — deployment target, integration testing (if mirrored) |
+| `~/ksf_Infrastructure/0_ksf_modules/ksf_FA_AsteriskPBX` | UAT bind point — deployment target, integration testing (if mirrored) |
