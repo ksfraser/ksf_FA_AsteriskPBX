@@ -5,8 +5,18 @@
     "license": "GPL-3.0",
     "require": {
         "php": ">=7.4",
-        "ksfraser/traits": "^1.2"
+        "ksfraser/traits": "^1.2",
+        "ksfraser/ksf-fa-common": "^1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6"
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "config": {
+        "platform": {
+            "php": "7.4.33"
+        },
+        "sort-packages": true
+    }
 }

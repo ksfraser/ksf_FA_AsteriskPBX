@@ -18,7 +18,7 @@ function get_extensions(array $filters = []): ?object
 {
     global $db;
     $sql = "SELECT e.*, emp.name as employee_name FROM " . TB_PREF . "asterisk_extensions e
-        LEFT JOIN " . TB_PREF . "hr_employees emp ON e.employee_id = emp.id WHERE 1=1";
+        LEFT JOIN " . TB_PREF . "ksf_asteriskpbx_employees emp ON e.employee_id = emp.id WHERE 1=1";
     
     if (!empty($filters['employee_id'])) {
         $sql .= " AND e.employee_id = " . $filters['employee_id'];
@@ -83,7 +83,7 @@ function get_call_history(string $phone_number, int $limit = 10): ?object
     global $db;
     $sql = "SELECT c.*, e.extension, emp.name as employee_name FROM " . TB_PREF . "asterisk_calls c
         LEFT JOIN " . TB_PREF . "asterisk_extensions e ON c.extension = e.extension
-        LEFT JOIN " . TB_PREF . "hr_employees emp ON e.employee_id = emp.id
+        LEFT JOIN " . TB_PREF . "ksf_asteriskpbx_employees emp ON e.employee_id = emp.id
         WHERE c.caller_number = " . $db->escape($phone_number) . " 
         ORDER BY c.call_start DESC LIMIT " . $limit;
     return $db->query($sql);
@@ -103,33 +103,102 @@ function lookup_phone_number(string $phone_number): array
 {
     global $db;
     $results = ['contacts' => [], 'leads' => [], 'customers' => []];
-    
-    // Search contacts
-    $sql = "SELECT * FROM " . TB_PREF . "ext_contact_info WHERE value = " . $db->escape($phone_number) . " LIMIT 5";
-    $result = $db->query($sql);
-    while ($row = $db->fetch($result)) {
-        $results['contacts'][] = ['id' => $row['id'], 'type' => $row['type'], 'phone' => $phone_number];
-    }
-    
-    // Search leads (if CRM module exists)
-    if (table_exists('crm_leads')) {
-        $sql = "SELECT id, name, phone FROM " . TB_PREF . "crm_leads WHERE phone = " . $db->escape($phone_number) . " LIMIT 5";
-        $result = $db->query($sql);
-        while ($row = $db->fetch($result)) {
-            $results['leads'][] = ['id' => $row['id'], 'name' => $row['name'], 'phone' => $row['phone']];
+
+    // Search contacts: FA core's contact registry (0_crm_persons) reached
+    // through the shared contact resolver. FA has no phone-indexed person
+    // function and no 0_ext_contact_info table, so the resolver's search()
+    // (name / email / phone / phone2) is the supported way to match a number.
+    $resolver = asterisk_contact_resolver();
+    if ($resolver !== null) {
+        foreach ($resolver->search($phone_number, 5) as $contact) {
+            $results['contacts'][] = [
+                'id' => $contact->getId(),
+                'type' => $contact->getType() !== null ? $contact->getType() : 'contact',
+                'name' => $contact->getDisplayName(),
+                'phone' => $phone_number,
+            ];
         }
     }
-    
-    // Search customers
-    if (table_exists('debtors_master')) {
-        $sql = "SELECT debtor_no, name, phone FROM " . TB_PREF . "debtors_master WHERE phone = " . $db->escape($phone_number) . " LIMIT 5";
+
+    // Search leads (if CRM module exists). A lead is a CRM-domain record, so
+    // it lives in the CRM module's own 0_ksf_crm_leads table.
+    if (table_exists('ksf_crm_leads')) {
+        $sql = "SELECT id, debtor_no, phone FROM " . TB_PREF . "ksf_crm_leads WHERE phone = " . $db->escape($phone_number) . " LIMIT 5";
         $result = $db->query($sql);
         while ($row = $db->fetch($result)) {
-            $results['customers'][] = ['id' => $row['debtor_no'], 'name' => $row['name'], 'phone' => $row['phone']];
+            $results['leads'][] = [
+                'id' => $row['id'],
+                'name' => asterisk_customer_name($row['debtor_no']),
+                'phone' => $row['phone'],
+            ];
         }
     }
-    
+
+    // The 'customers' bucket stays empty on purpose. FA core's debtor record
+    // (0_debtors_master) has no phone column - the phone lives on the person
+    // (0_crm_persons) - so a debtor can never be matched by phone number, and
+    // FA exposes only the DEBTOR -> CONTACTS direction, never PERSON ->
+    // DEBTOR. The contacts bucket above already lists those people.
+
     return $results;
+}
+
+/**
+ * The shared contact resolver, or null when the package is not installed.
+ *
+ * @return \ksfraser\FrontAccounting\Common\ContactResolver\Contract\ContactResolverInterface|null
+ */
+function asterisk_contact_resolver(): ?object
+{
+    static $resolver = false;
+
+    if ($resolver !== false) {
+        return $resolver;
+    }
+
+    $autoload = dirname(__DIR__) . '/vendor/autoload.php';
+    if (!file_exists($autoload)) {
+        $resolver = null;
+        return $resolver;
+    }
+
+    require_once $autoload;
+
+    $class = 'ksfraser\\FrontAccounting\\Common\\ContactResolver\\ContactResolver';
+    if (!class_exists($class)) {
+        $resolver = null;
+        return $resolver;
+    }
+
+    $resolver = new $class();
+
+    return $resolver;
+}
+
+/**
+ * A customer's display name, via FA's own function.
+ *
+ * @param string $debtor_no Debtor number
+ * @return string
+ */
+function asterisk_customer_name($debtor_no): string
+{
+    if (!function_exists('get_customer_name')) {
+        $customers_db = isset($GLOBALS['path_to_root'])
+            ? $GLOBALS['path_to_root'] . '/sales/includes/db/customers_db.inc'
+            : '';
+        if ($customers_db !== '' && is_file($customers_db)) {
+            include_once $customers_db;
+        }
+    }
+
+    if (!function_exists('get_customer_name')) {
+        return (string) $debtor_no;
+    }
+
+    $name = get_customer_name($debtor_no);
+
+    return ($name === null || $name === '') ? (string) $debtor_no : (string) $name;
 }
 
 function table_exists(string $table): bool
