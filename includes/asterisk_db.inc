@@ -123,9 +123,9 @@ function lookup_phone_number(string $phone_number): array
     // Search leads (if CRM module exists). A lead is a CRM-domain record, so
     // it lives in the CRM module's own 0_ksf_crm_leads table.
     if (table_exists('ksf_crm_leads')) {
-        $sql = "SELECT id, debtor_no, phone FROM " . TB_PREF . "ksf_crm_leads WHERE phone = " . $db->escape($phone_number) . " LIMIT 5";
-        $result = $db->query($sql);
-        while ($row = $db->fetch($result)) {
+        $sql = "SELECT id, debtor_no, phone FROM " . TB_PREF . "ksf_crm_leads WHERE phone = " . db_escape($phone_number) . " LIMIT 5";
+        $result = db_query($sql);
+        while ($row = db_fetch($result)) {
             $results['leads'][] = [
                 'id' => $row['id'],
                 'name' => asterisk_customer_name($row['debtor_no']),
@@ -203,8 +203,7 @@ function asterisk_customer_name($debtor_no): string
 
 function table_exists(string $table): bool
 {
-    global $db;
-    $sql = "SHOW TABLES LIKE " . $db->escape(TB_PREF . $table);
-    $result = $db->query($sql);
-    return $result && $db->num_rows($result) > 0;
+    $sql = "SHOW TABLES LIKE " . db_escape(TB_PREF . $table);
+    $result = db_query($sql);
+    return $result && db_num_rows($result) > 0;
 }
