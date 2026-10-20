@@ -94,7 +94,7 @@ Browser ──── WebSocket ──── Asterisk
 ## 6. Database Tables
 
 ```sql
-CREATE TABLE fa_asterisk_extensions (
+CREATE TABLE ksf_asteriskpbx_extensions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     extension VARCHAR(10) NOT NULL,
     employee_id INT,
@@ -102,7 +102,7 @@ CREATE TABLE fa_asterisk_extensions (
     status VARCHAR(20) DEFAULT 'active'
 );
 
-CREATE TABLE fa_asterisk_calls (
+CREATE TABLE ksf_asteriskpbx_calls (
     id INT AUTO_INCREMENT PRIMARY KEY,
     extension VARCHAR(10),
     caller_number VARCHAR(50),

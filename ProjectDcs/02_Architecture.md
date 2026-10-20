@@ -109,7 +109,7 @@ class hooks_fa_asteriskpbx extends hooks {
 
 ```
 ┌─────────────────────────────────┐         ┌─────────────────────────────────┐
-│    fa_asterisk_extensions      │         │      fa_asterisk_calls           │
+│    ksf_asteriskpbx_extensions      │         │      ksf_asteriskpbx_calls           │
 ├─────────────────────────────────┤         ├─────────────────────────────────┤
 │ id (PK)                         │1       *│ id (PK)                         │
 │ extension (UNIQUE)              │─────────│ extension (FK)                  │
@@ -130,7 +130,7 @@ class hooks_fa_asteriskpbx extends hooks {
                                             │             │
                                             ▼             ▼
                         ┌─────────────────────────────────┐
-                        │     fa_asterisk_voicemail       │
+                        │     ksf_asteriskpbx_voicemail       │
                         ├─────────────────────────────────┤
                         │ id (PK)                         │
                         │ extension (FK)                  │
@@ -145,10 +145,10 @@ class hooks_fa_asteriskpbx extends hooks {
 
 ### 3.2 Table Definitions
 
-#### fa_asterisk_extensions
+#### ksf_asteriskpbx_extensions
 
 ```sql
-CREATE TABLE IF NOT EXISTS `fa_asterisk_extensions` (
+CREATE TABLE IF NOT EXISTS `ksf_asteriskpbx_extensions` (
     `id` INT(11) NOT NULL AUTO_INCREMENT,
     `extension` VARCHAR(20) NOT NULL,
     `employee_id` VARCHAR(100) DEFAULT NULL,
@@ -162,10 +162,10 @@ CREATE TABLE IF NOT EXISTS `fa_asterisk_extensions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-#### fa_asterisk_calls
+#### ksf_asteriskpbx_calls
 
 ```sql
-CREATE TABLE IF NOT EXISTS `fa_asterisk_calls` (
+CREATE TABLE IF NOT EXISTS `ksf_asteriskpbx_calls` (
     `id` INT(11) NOT NULL AUTO_INCREMENT,
     `caller_number` VARCHAR(20) DEFAULT NULL,
     `called_number` VARCHAR(20) DEFAULT NULL,

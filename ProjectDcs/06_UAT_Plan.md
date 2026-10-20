@@ -49,7 +49,7 @@
 
 **Expected Result:**
 - Module activated without errors
-- 3 tables created: fa_asterisk_extensions, fa_asterisk_calls, fa_asterisk_voicemail
+- 3 tables created: ksf_asteriskpbx_extensions, ksf_asteriskpbx_calls, ksf_asteriskpbx_voicemail
 - Menu items visible: Extension Mapping, Call History, Voicemail
 
 **Pass Criteria:**

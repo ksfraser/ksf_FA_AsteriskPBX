@@ -116,7 +116,7 @@ Call Details:
   - Duration: 300 seconds
   - Status: completed
 
-Result: Call record created in fa_asterisk_calls
+Result: Call record created in ksf_asteriskpbx_calls
 ```
 
 ---

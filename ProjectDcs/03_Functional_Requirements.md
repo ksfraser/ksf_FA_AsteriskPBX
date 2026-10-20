@@ -38,7 +38,7 @@ This document specifies the functional requirements for the Asterisk PBX Integra
 - email (optional, notification email)
 
 **Acceptance Criteria:**
-- Extension saved to fa_asterisk_extensions
+- Extension saved to ksf_asteriskpbx_extensions
 - Extension number validated as unique
 - Success message displayed
 
@@ -108,7 +108,7 @@ This document specifies the functional requirements for the Asterisk PBX Integra
 - status: completed, missed, abandoned
 
 **Acceptance Criteria:**
-- Call saved to fa_asterisk_calls
+- Call saved to ksf_asteriskpbx_calls
 - All fields populated from Asterisk events
 - Timestamp accurate to second
 
@@ -377,17 +377,17 @@ This document specifies the functional requirements for the Asterisk PBX Integra
 
 | Table | Purpose |
 |-------|---------|
-| fa_asterisk_extensions | Extension mapping |
-| fa_asterisk_calls | Call history |
-| fa_asterisk_voicemail | Voicemail messages |
+| ksf_asteriskpbx_extensions | Extension mapping |
+| ksf_asteriskpbx_calls | Call history |
+| ksf_asteriskpbx_voicemail | Voicemail messages |
 
 ### 9.2 Index Requirements
 
 | Table | Indexes |
 |-------|---------|
-| fa_asterisk_extensions | extension (unique), employee_id |
-| fa_asterisk_calls | extension, start_time, debtor_no |
-| fa_asterisk_voicemail | extension, is_read |
+| ksf_asteriskpbx_extensions | extension (unique), employee_id |
+| ksf_asteriskpbx_calls | extension, start_time, debtor_no |
+| ksf_asteriskpbx_voicemail | extension, is_read |
 
 ---
 

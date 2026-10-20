@@ -68,8 +68,8 @@ class hooks_ksf_FA_AsteriskPBX extends hooks {
 
     private function ensure_asterisk_schema() {
         $tables = array(
-            TB_PREF . "fa_asterisk_extensions" => "
-                CREATE TABLE IF NOT EXISTS `" . TB_PREF . "fa_asterisk_extensions` (
+            TB_PREF . "ksf_asteriskpbx_extensions" => "
+                CREATE TABLE IF NOT EXISTS `" . TB_PREF . "ksf_asteriskpbx_extensions` (
                     `id` INT(11) NOT NULL AUTO_INCREMENT,
                     `extension` VARCHAR(20) NOT NULL,
                     `employee_id` VARCHAR(100) DEFAULT NULL,
@@ -82,8 +82,8 @@ class hooks_ksf_FA_AsteriskPBX extends hooks {
                     KEY `idx_employee` (`employee_id`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
-            TB_PREF . "fa_asterisk_calls" => "
-                CREATE TABLE IF NOT EXISTS `" . TB_PREF . "fa_asterisk_calls` (
+            TB_PREF . "ksf_asteriskpbx_calls" => "
+                CREATE TABLE IF NOT EXISTS `" . TB_PREF . "ksf_asteriskpbx_calls` (
                     `id` INT(11) NOT NULL AUTO_INCREMENT,
                     `caller_number` VARCHAR(20) DEFAULT NULL,
                     `called_number` VARCHAR(20) DEFAULT NULL,
@@ -103,8 +103,8 @@ class hooks_ksf_FA_AsteriskPBX extends hooks {
                     KEY `idx_start_time` (`start_time`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
-            TB_PREF . "fa_asterisk_voicemail" => "
-                CREATE TABLE IF NOT EXISTS `" . TB_PREF . "fa_asterisk_voicemail` (
+            TB_PREF . "ksf_asteriskpbx_voicemail" => "
+                CREATE TABLE IF NOT EXISTS `" . TB_PREF . "ksf_asteriskpbx_voicemail` (
                     `id` INT(11) NOT NULL AUTO_INCREMENT,
                     `extension` VARCHAR(20) NOT NULL,
                     `caller_number` VARCHAR(20) DEFAULT NULL,

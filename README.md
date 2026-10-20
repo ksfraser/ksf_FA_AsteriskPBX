@@ -19,8 +19,8 @@ This is a FrontAccounting extension; it installs into the FA `modules/` tree.
 
 ```bash
 rsync -a --exclude .git --exclude vendor \
-    ~/Documents/ksf_FA_AsteriskPBX/ ~/Documents/ksf_Infrastructure/fa_modules/ksf_FA_AsteriskPBX/
-cd ~/Documents/ksf_Infrastructure/fa_modules/ksf_FA_AsteriskPBX \
+    ~/Documents/ksf_FA_AsteriskPBX/ ~/Documents/ksf_Infrastructure/0_ksf_modules/ksf_FA_AsteriskPBX/
+cd ~/Documents/ksf_Infrastructure/0_ksf_modules/ksf_FA_AsteriskPBX \
     && composer install --no-dev
 ```
 
@@ -32,7 +32,7 @@ Notes:
 
 - Do **not** deploy `vendor/` from the dev checkout - it carries dev
   dependencies (PHPUnit needs PHP >= 8.1) that fatal on the 7.4 runtime.
-- Never edit anything under `fa_modules/` by hand. It is build output;
+- Never edit anything under `0_ksf_modules/` by hand. It is build output;
   development happens in `~/Documents/ksf_FA_AsteriskPBX`.
 
 ## Where to find it in the UI
@@ -65,12 +65,12 @@ ksf_FA_AsteriskPBX/
 ├── includes/            # procedural FA helpers
 ├── sql/                 # schema (literal 0_ table prefix)
 ├── ProjectDcs/          # BABOK documents
-└── vendor/              # not deployed; composer install --no-dev in fa_modules
+└── vendor/              # not deployed; composer install --no-dev in 0_ksf_modules
 ```
 
 ## Contributing
 
-1. Work in `~/Documents/ksf_FA_AsteriskPBX` - never in `fa_modules/`.
+1. Work in `~/Documents/ksf_FA_AsteriskPBX` - never in `0_ksf_modules/`.
 2. Branch: `feat/`, `fix/`, `refactor/`, `docs/`.
 3. Tests first: `cd ~/Documents/ksf_FA_AsteriskPBX && php vendor/bin/phpunit`.
 4. Requirements live in `ProjectDcs/` as individual files

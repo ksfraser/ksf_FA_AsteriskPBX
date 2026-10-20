@@ -233,9 +233,9 @@ Flow:
 
 | Table | Purpose |
 |-------|---------|
-| fa_asterisk_extensions | Extension mapping |
-| fa_asterisk_calls | Call history |
-| fa_asterisk_voicemail | Voicemail records |
+| ksf_asteriskpbx_extensions | Extension mapping |
+| ksf_asteriskpbx_calls | Call history |
+| ksf_asteriskpbx_voicemail | Voicemail records |
 
 ### 6.3 External Systems
 

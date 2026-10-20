@@ -54,7 +54,7 @@ $id = create_extension(
 
 **Verification:**
 - Returns integer (new extension ID)
-- Extension exists in fa_asterisk_extensions
+- Extension exists in ksf_asteriskpbx_extensions
 
 **Expected Result:** Valid ID returned
 
@@ -157,7 +157,7 @@ $call_id = record_call([
 
 **Verification:**
 - Returns call ID
-- Record exists in fa_asterisk_calls
+- Record exists in ksf_asteriskpbx_calls
 
 **Expected Result:** Valid ID returned
 

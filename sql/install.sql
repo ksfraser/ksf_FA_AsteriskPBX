@@ -1,7 +1,11 @@
 -- AsteriskPBX module database schema for FrontAccounting
 
 -- Extension to employee mapping
-CREATE TABLE IF NOT EXISTS `fa_asterisk_extensions` (
+ALTER TABLE IF EXISTS `0_fa_asterisk_extensions` RENAME TO `0_ksf_asteriskpbx_extensions`;
+ALTER TABLE IF EXISTS `0_fa_asterisk_calls` RENAME TO `0_ksf_asteriskpbx_calls`;
+ALTER TABLE IF EXISTS `0_fa_asterisk_voicemail` RENAME TO `0_ksf_asteriskpbx_voicemail`;
+
+CREATE TABLE IF NOT EXISTS `0_ksf_asteriskpbx_extensions` (
     `id` INT(11) NOT NULL AUTO_INCREMENT,
     `extension` VARCHAR(20) NOT NULL,
     `employee_id` INT(11) DEFAULT NULL,
@@ -16,7 +20,7 @@ CREATE TABLE IF NOT EXISTS `fa_asterisk_extensions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Call history
-CREATE TABLE IF NOT EXISTS `fa_asterisk_calls` (
+CREATE TABLE IF NOT EXISTS `0_ksf_asteriskpbx_calls` (
     `id` INT(11) NOT NULL AUTO_INCREMENT,
     `caller_number` VARCHAR(50) NOT NULL,
     `called_number` VARCHAR(20) NOT NULL,
@@ -40,7 +44,7 @@ CREATE TABLE IF NOT EXISTS `fa_asterisk_calls` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Voicemail
-CREATE TABLE IF NOT EXISTS `fa_asterisk_voicemail` (
+CREATE TABLE IF NOT EXISTS `0_ksf_asteriskpbx_voicemail` (
     `id` INT(11) NOT NULL AUTO_INCREMENT,
     `extension` VARCHAR(20) NOT NULL,
     `caller_number` VARCHAR(50) DEFAULT NULL,
@@ -52,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `fa_asterisk_voicemail` (
     KEY `extension` (`extension`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 -- Module version
-INSERT INTO `fa_modules` (`name`, `version`, `enabled`, `installed`) VALUES
+INSERT INTO `0_ksf_modules` (`name`, `version`, `enabled`, `installed`) VALUES
 ('AsteriskPBX', '1.0.0', 1, NOW()) ON DUPLICATE KEY UPDATE `version` = '1.0.0';
 
 -- ---------------------------------------------------------------------------
